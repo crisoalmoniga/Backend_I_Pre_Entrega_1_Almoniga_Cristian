@@ -1,79 +1,70 @@
 import { Router } from 'express';
-
+import CartManager from '../fileManager/cartManager.js'; // Importar la clase CartManager
 
 const router = Router();
-
-// Array temporal para carritos
-let carts = [];
+const cartManager = new CartManager(); // Crear una instancia del CartManager
 
 // GET /api/carts - Devuelve todos los carritos
 router.get('/', (req, res) => {
-    res.json(carts);
+    const carts = cartManager.carts; // Acceso directo a la propiedad carts
+    res.json(carts); // Devuelve los carritos
 });
 
 // GET /api/carts/:id - Devuelve un carrito específico por ID
 router.get('/:id', (req, res) => {
-    const { id } = req.params;
-    const cart = carts.find((c) => c.id === parseInt(id));
-
+    const id = parseInt(req.params.id); // Asegurarse de convertir el ID a número
+    const cart = cartManager.carts.find((c) => c.id === id); // Buscar el carrito
     if (!cart) {
-        return res.status(404).json({ message: 'Carrito no encontrado' });
+        res.status(404).json({ message: 'Carrito no encontrado' });
+    } else {
+        res.json(cart); // Enviar el carrito encontrado
     }
-
-    res.json(cart);
 });
 
 // POST /api/carts - Crea un nuevo carrito
 router.post('/', (req, res) => {
-    const { products } = req.body;
-
-    if (!products || !Array.isArray(products)) {
-        return res.status(400).json({ message: 'Debe incluir un array de productos' });
-    }
-
     const newCart = {
-        id: carts.length + 1,
-        products, // [{ productId, quantity }]
+        id: cartManager.carts.length + 1, // Generar un ID nuevo basado en la cantidad de carritos
+        products: [] // Carrito vacío al inicio
     };
-
-    carts.push(newCart);
-    res.status(201).json(newCart);
+    cartManager.carts.push(newCart); // Agregar el carrito a la lista
+    res.status(201).json(newCart); // Enviar respuesta con el carrito creado
 });
 
-// PUT /api/carts/:id - Actualiza un carrito existente
-router.put('/:id', (req, res) => {
-    const { id } = req.params;
-    const { products } = req.body;
+// POST /api/carts/:id/products - Agrega un producto a un carrito
+router.post('/:id/products', (req, res) => {
+    const id = parseInt(req.params.id);
+    const { productId, quantity } = req.body;
 
-    const cartIndex = carts.findIndex((c) => c.id === parseInt(id));
-
-    if (cartIndex === -1) {
-        return res.status(404).json({ message: 'Carrito no encontrado' });
+    const cart = cartManager.carts.find((c) => c.id === id); // Buscar el carrito
+    if (!cart) {
+        res.status(404).json({ message: 'Carrito no encontrado' });
+        return;
     }
 
-    if (!products || !Array.isArray(products)) {
-        return res.status(400).json({ message: 'Debe incluir un array de productos' });
+    // Verificar si el producto ya existe en el carrito
+    const existingProduct = cart.products.find((p) => p.productId === productId);
+    if (existingProduct) {
+        existingProduct.quantity += quantity; // Incrementar la cantidad
+    } else {
+        cart.products.push({ productId, quantity }); // Agregar nuevo producto
     }
 
-    // Actualizamos los productos del carrito
-    carts[cartIndex].products = products;
-
-    res.json(carts[cartIndex]);
+    res.json(cart); // Enviar el carrito actualizado
 });
 
 // DELETE /api/carts/:id - Elimina un carrito
 router.delete('/:id', (req, res) => {
-    const { id } = req.params;
+    const id = parseInt(req.params.id);
+    const index = cartManager.carts.findIndex((c) => c.id === id); // Buscar índice del carrito
 
-    const cartIndex = carts.findIndex((c) => c.id === parseInt(id));
-
-    if (cartIndex === -1) {
-        return res.status(404).json({ message: 'Carrito no encontrado' });
+    if (index === -1) {
+        res.status(404).json({ message: 'Carrito no encontrado' });
+        return;
     }
 
-    carts.splice(cartIndex, 1);
-
-    res.json({ message: 'Carrito eliminado exitosamente' });
+    const deletedCart = cartManager.carts.splice(index, 1); // Eliminar el carrito
+    res.json({ message: 'Carrito eliminado', cart: deletedCart[0] }); // Confirmación
 });
 
 export default router;
