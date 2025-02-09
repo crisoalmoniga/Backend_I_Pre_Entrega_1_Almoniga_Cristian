@@ -59,4 +59,10 @@ router.delete('/:id', async (req, res) => {
     res.json({ message: 'Producto eliminado exitosamente' });
 });
 
+router.get('/realtimeproducts', async (req, res) => {
+    const products = await productManagerInstance.leerProductos();
+    res.render('realTimeProducts', { products });
+});
+
+
 export default router;

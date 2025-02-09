@@ -32,15 +32,16 @@ app.use('/api/carts', cartsRouter);
 io.on('connection', (socket) => {
     console.log('Cliente conectado');
 
-    socket.on('newProduct', (product) => {
-        console.log('Nuevo producto:', product);
-        io.emit('updateProducts', product);
+    socket.on('newProduct', async () => {
+        const products = await productManagerInstance.leerProductos();
+        io.emit('updateProducts', products);
     });
 
     socket.on('disconnect', () => {
         console.log('Cliente desconectado');
     });
 });
+
 
 // Inicialización del servidor
 const PORT = 8080;
