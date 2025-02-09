@@ -1,14 +1,14 @@
 import { Router } from 'express';
 import ProductManager from '../fileManager/productManagerMemory.js';
-import { io } from '../app.js';  // Importar io para emitir eventos de WebSocket
+import { io } from '../app.js';  // Importamos io desde app.js para emitir eventos de WebSocket
 
 const router = Router();
 const productManagerInstance = new ProductManager();
 
-// GET / - Devuelve todos los productos
-router.get('/', async (req, res) => {
+// GET /realtimeproducts - Renderiza la vista de productos en tiempo real
+router.get('/realtimeproducts', async (req, res) => {
     const products = await productManagerInstance.leerProductos();
-    res.render('index', { products });  // Renderizar la vista index.handlebars con la lista de productos
+    res.render('realTimeProducts', { products });
 });
 
 // POST / - Agrega un nuevo producto
@@ -21,29 +21,11 @@ router.post('/', async (req, res) => {
     const newProduct = { title, description, price, code, stock, category };
     await productManagerInstance.crearProducto(newProduct);
 
-    // Emitir evento para actualizar productos en tiempo real
-    io.emit('newProduct');
-    
-    res.status(201).json(newProduct);
-});
-
-// DELETE /:id - Elimina un producto
-router.delete('/:id', async (req, res) => {
-    const { id } = req.params;
+    // Emitir el evento con la lista actualizada
     const products = await productManagerInstance.leerProductos();
-    const productIndex = products.findIndex((p) => p.id === parseInt(id));
+    io.emit('updateProducts', products);
 
-    if (productIndex === -1) {
-        return res.status(404).json({ message: 'Producto no encontrado' });
-    }
-
-    products.splice(productIndex, 1);
-    await productManagerInstance.escribirProductos(products);
-
-    // Emitir evento para actualizar productos en tiempo real
-    io.emit('deleteProduct');
-    
-    res.json({ message: 'Producto eliminado exitosamente' });
+    res.status(201).json(newProduct);
 });
 
 export default router;

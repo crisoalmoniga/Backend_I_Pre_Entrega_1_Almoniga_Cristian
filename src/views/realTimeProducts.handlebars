@@ -16,18 +16,35 @@
 
     <script>
         const socket = io();
-        
-        // Actualiza la lista de productos en tiempo real
+
+        // Verificar conexión con el servidor WebSocket
+        socket.on('connect', () => {
+            console.log('✅ Conectado al servidor WebSocket');
+        });
+
+        // Escucha el evento 'updateProducts' para actualizar la lista de productos
         socket.on('updateProducts', (products) => {
+            console.log('📢 Productos actualizados:', products);
             const productList = document.getElementById('productList');
             productList.innerHTML = ''; // Limpiar la lista
 
-            products.forEach(product => {
-                const newProduct = document.createElement('li');
-                newProduct.id = `product-${product.id}`;
-                newProduct.innerHTML = `<strong>${product.title}</strong>: ${product.price} USD`;
-                productList.appendChild(newProduct);
-            });
+            if (!products || products.length === 0) {
+                const emptyMessage = document.createElement('li');
+                emptyMessage.textContent = 'No hay productos disponibles.';
+                productList.appendChild(emptyMessage);
+            } else {
+                products.forEach(product => {
+                    const newProduct = document.createElement('li');
+                    newProduct.id = `product-${product.id}`;
+                    newProduct.innerHTML = `<strong>${product.title}</strong>: ${product.price} USD`;
+                    productList.appendChild(newProduct);
+                });
+            }
+        });
+
+        // Verificar cuando el cliente se desconecta
+        socket.on('disconnect', () => {
+            console.log('❌ Desconectado del servidor WebSocket');
         });
     </script>
 </body>
