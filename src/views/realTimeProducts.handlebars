@@ -10,17 +10,21 @@
     <h1>Lista de Productos en Tiempo Real</h1>
     <ul id="productList">
         {{#each products}}
-            <li><strong>{{this.title}}</strong>: {{this.price}} USD</li>
+            <li id="product-{{this.id}}"><strong>{{this.title}}</strong>: {{this.price}} USD</li>
         {{/each}}
     </ul>
 
     <script>
         const socket = io();
+        
+        // Actualiza la lista de productos en tiempo real
         socket.on('updateProducts', (products) => {
             const productList = document.getElementById('productList');
-            productList.innerHTML = '';
+            productList.innerHTML = ''; // Limpiar la lista
+
             products.forEach(product => {
                 const newProduct = document.createElement('li');
+                newProduct.id = `product-${product.id}`;
                 newProduct.innerHTML = `<strong>${product.title}</strong>: ${product.price} USD`;
                 productList.appendChild(newProduct);
             });
