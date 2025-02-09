@@ -7,8 +7,9 @@ const productManagerInstance = new ProductManager();
 // GET / - Devuelve todos los productos
 router.get('/', async (req, res) => {
     const products = await productManagerInstance.leerProductos();
-    res.json(products);
+    res.render('index', { products });
 });
+
 
 // GET /:id - Devuelve un producto específico por ID
 router.get('/:id', async (req, res) => {
