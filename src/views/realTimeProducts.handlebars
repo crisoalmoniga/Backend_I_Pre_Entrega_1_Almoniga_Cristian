@@ -10,7 +10,7 @@
     <h1>Lista de Productos en Tiempo Real</h1>
     <ul id="productList">
         {{#each products}}
-            <li id="product-{{this.id}}"><strong>{{this.title}}</strong>: {{this.price}} USD</li>
+            <li id="product-{{this._id}}"><strong>{{this.title}}</strong>: {{this.price}} USD</li>
         {{/each}}
     </ul>
 
@@ -19,12 +19,12 @@
 
         // Verificar conexión con el servidor WebSocket
         socket.on('connect', () => {
-            console.log('✅ Conectado al servidor WebSocket');
+            console.log('Conectado al servidor WebSocket');
         });
 
         // Escucha el evento 'updateProducts' para actualizar la lista de productos
         socket.on('updateProducts', (products) => {
-            console.log('📢 Productos actualizados:', products);
+            console.log(' Productos actualizados:', products);
             const productList = document.getElementById('productList');
             productList.innerHTML = ''; // Limpiar la lista
 
@@ -34,8 +34,9 @@
                 productList.appendChild(emptyMessage);
             } else {
                 products.forEach(product => {
+                    console.log(' Producto recibido:', product);
                     const newProduct = document.createElement('li');
-                    newProduct.id = `product-${product.id}`;
+                    newProduct.id = `product-${product._id}`;
                     newProduct.innerHTML = `<strong>${product.title}</strong>: ${product.price} USD`;
                     productList.appendChild(newProduct);
                 });
@@ -44,7 +45,7 @@
 
         // Verificar cuando el cliente se desconecta
         socket.on('disconnect', () => {
-            console.log('❌ Desconectado del servidor WebSocket');
+            console.log('Desconectado del servidor WebSocket');
         });
     </script>
 </body>
