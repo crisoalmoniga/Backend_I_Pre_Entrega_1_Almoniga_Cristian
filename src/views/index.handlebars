@@ -8,11 +8,22 @@
 <body>
     <h1>Lista de Productos</h1>
     <ul>
-        {{#each products}}
+        {{#each payload}}
             <li>
                 <strong>{{this.title}}</strong>: {{this.price}} USD
             </li>
         {{/each}}
     </ul>
+
+    <!-- Paginación -->
+    <div>
+        {{#if hasPrevPage}}
+            <a href="?page={{prevPage}}">⬅ Anterior</a>
+        {{/if}}
+        <span>Página {{page}} de {{totalPages}}</span>
+        {{#if hasNextPage}}
+            <a href="?page={{nextPage}}">Siguiente ➡</a>
+        {{/if}}
+    </div>
 </body>
 </html>
