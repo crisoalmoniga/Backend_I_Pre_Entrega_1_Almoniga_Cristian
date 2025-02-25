@@ -14,8 +14,51 @@ const app = express();
 const server = createServer(app);
 const io = new Server(server);
 
-//  Conectar a MongoDB
-const MONGO_URL = 'mongodb+srv://cristianalmoniga:Q8ggX0DhjCOe9fmT@cluster0.miur3.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'; // Cambia si usas Atlas
+// Conectar a MongoDB
+const MONGO_URL = 'mongodb+srv://cristianalmoniga:Q8ggX0DhjCOe9fmT@cluster0.miur3.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
+
+// Función para precargar productos si la colección está vacía
+const precargarProductos = async () => {
+    try {
+        const productosExistentes = await ProductModel.find();
+        if (productosExistentes.length === 0) {
+            console.log("No hay productos en la base de datos. Agregando productos de prueba...");
+            await ProductModel.insertMany([
+                {
+                    title: "Smartphone",
+                    description: "Celular de última generación",
+                    price: 1200,
+                    code: "SMART123",
+                    stock: 15,
+                    category: "Tecnología"
+                },
+                {
+                    title: "Laptop",
+                    description: "Laptop potente para desarrollo",
+                    price: 2500,
+                    code: "LAPTOP456",
+                    stock: 8,
+                    category: "Computación"
+                },
+                {
+                    title: "Auriculares",
+                    description: "Auriculares inalámbricos con cancelación de ruido",
+                    price: 300,
+                    code: "AUDIO789",
+                    stock: 20,
+                    category: "Accesorios"
+                }
+            ]);
+            console.log("Productos de prueba agregados correctamente.");
+        } else {
+            console.log("Ya existen productos en la base de datos.");
+        }
+    } catch (error) {
+        console.error("Error al precargar productos:", error);
+    }
+};
+
+// Conectar a la base de datos y precargar productos
 const connectDB = async () => {
     try {
         await mongoose.connect(MONGO_URL, {
@@ -23,12 +66,13 @@ const connectDB = async () => {
             useUnifiedTopology: true
         });
         console.log('Conectado a MongoDB');
+        await precargarProductos();
     } catch (error) {
         console.error('Error al conectar a MongoDB:', error);
-        process.exit(1); // Cierra la app si no puede conectarse
+        process.exit(1);
     }
 };
-connectDB(); // Llamamos la función
+connectDB();
 
 // Configurar Handlebars como motor de plantillas
 app.engine('handlebars', engine());
@@ -48,7 +92,7 @@ app.use('/api/carts', cartsRouter);
 
 // Ruta para la vista de productos en tiempo real
 app.get('/realtimeproducts', async (req, res) => {
-    const products = await ProductModel.find(); // Ahora usamos MongoDB
+    const products = await ProductModel.find();
     res.render('realTimeProducts', { products });
 });
 
@@ -57,7 +101,7 @@ io.on('connection', (socket) => {
     console.log('Cliente conectado');
 
     const emitirProductosActualizados = async () => {
-        const products = await ProductModel.find(); // Ahora MongoDB
+        const products = await ProductModel.find();
         io.emit('updateProducts', products);
     };
 
@@ -80,5 +124,5 @@ export { io };
 // Inicialización del servidor
 const PORT = 8080;
 server.listen(PORT, () => {
-    console.log(` Servidor escuchando en el puerto ${PORT}`);
+    console.log(`Servidor escuchando en el puerto ${PORT}`);
 });
