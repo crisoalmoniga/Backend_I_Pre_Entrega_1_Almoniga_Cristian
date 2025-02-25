@@ -2,8 +2,9 @@ import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import { engine } from 'express-handlebars';
+import mongoose from 'mongoose';
 import __dirname from './utils.js';
-import ProductManager from './fileManager/productManagerMemory.js'; // Importar ProductManager
+import ProductModel from './models/product.model.js'; // Ahora usamos MongoDB
 
 // Routers
 import productsRouter from './routes/products.router.js';
@@ -12,7 +13,22 @@ import cartsRouter from './routes/carts.router.js';
 const app = express();
 const server = createServer(app);
 const io = new Server(server);
-const productManagerInstance = new ProductManager(); // Crear instancia de ProductManager
+
+//  Conectar a MongoDB
+const MONGO_URL = 'mongodb+srv://cristianalmoniga:Q8ggX0DhjCOe9fmT@cluster0.miur3.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'; // Cambia si usas Atlas
+const connectDB = async () => {
+    try {
+        await mongoose.connect(MONGO_URL, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true
+        });
+        console.log('Conectado a MongoDB');
+    } catch (error) {
+        console.error('Error al conectar a MongoDB:', error);
+        process.exit(1); // Cierra la app si no puede conectarse
+    }
+};
+connectDB(); // Llamamos la función
 
 // Configurar Handlebars como motor de plantillas
 app.engine('handlebars', engine());
@@ -32,7 +48,7 @@ app.use('/api/carts', cartsRouter);
 
 // Ruta para la vista de productos en tiempo real
 app.get('/realtimeproducts', async (req, res) => {
-    const products = await productManagerInstance.leerProductos();
+    const products = await ProductModel.find(); // Ahora usamos MongoDB
     res.render('realTimeProducts', { products });
 });
 
@@ -41,7 +57,7 @@ io.on('connection', (socket) => {
     console.log('Cliente conectado');
 
     const emitirProductosActualizados = async () => {
-        const products = await productManagerInstance.leerProductos();
+        const products = await ProductModel.find(); // Ahora MongoDB
         io.emit('updateProducts', products);
     };
 
@@ -64,5 +80,5 @@ export { io };
 // Inicialización del servidor
 const PORT = 8080;
 server.listen(PORT, () => {
-    console.log(`Escuchando en el puerto ${PORT}`);
+    console.log(` Servidor escuchando en el puerto ${PORT}`);
 });
